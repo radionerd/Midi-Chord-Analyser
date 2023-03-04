@@ -58,7 +58,6 @@ KSig  Major RelMinor  Diatonic Scale
 
 To set the key signature play the major or minor chord of the same name.
 Play the root note above♯ or below♭ middle C to select keys with 5-7♯ or 5-7♭
-
 ~~~
 
 eg: To set Dminor key. On the midi keyboard play top A♯+B+C followed by D+F+A
@@ -74,8 +73,7 @@ To compile the app under linux download all the files and compile using make.
 ~~~
 
 ## Using
-
-*** Start a sound synthesizer 
+### Start a sound synthesizer 
 ~~~
  $ fluidsynth -p Synth /usr/share/sounds/sf2/FluidR3_GM.sf2
 ~~~
