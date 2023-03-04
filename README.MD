@@ -30,11 +30,13 @@ eg: 1♭ Key:  Dm    minor
 
 ### Key Signature
 
-Set the Key Signature by playing far right hand notes A♯BC together followed by the new scale chord
+Set the Key Signature by playing far right hand notes A♯BC together followed by the new scale chord.
+
+eg: To set Dminor key. On the midi keyboard play top A♯+B+C followed by D+F+A
 
 Ref: https://en.wikipedia.org/wiki/Chord_notation
 
-The app uses Linux ALSA, Jack compatibility may be added later.
+The app uses Linux ALSA. Jack compatibility may be added later.
 
 ## Building
 To compile the app under linux download all the files and compile using make. 
