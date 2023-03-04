@@ -94,7 +94,7 @@ eg: *$ aconnect 28 128 ; aconnect 28 129 ; aconnectgui*
 
 NB aconnectgui has the title ALSA Sequencer
 
-## Errors, ommissions and improvements
+## Errors, omissions and improvements
 
 Please contact the author
 
