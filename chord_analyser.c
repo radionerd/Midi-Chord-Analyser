@@ -193,19 +193,18 @@ const char * ScaleDegree(int note,int chord,int key_note,int key_is_minor){
 }
 
 
-const int Major   = 1;
-const int minor   = 2;
-const int new_key = 4;
-const int lowest  = 8;
-const int log_ena = 0x10;
-const int log_toggle = 0x20;
+const int Major      =    1;
+const int minor      =    2;
+const int lowest     =    4;
+const int new_key    =    8;
+const int log_toggle = 0x10;
 // chord Bitmaps 12 bits one octave C=0x1, C♯=0x2,D=0x4,D♯=0x8 ... B=0x800
 const struct { int notes;char *name;int flags; } chord_defs[] = {
  { 0x091,"   Major",      Major }, // C E  G
  { 0x891,"⁷  Major⁷",     Major }, // C E  G  B
- { 0x811,"⁷  Major ⁷",     Major }, // C E     B
+ { 0x811,"⁷  Major ⁷",    Major }, // C E     B
  { 0x491,"dom⁷ dominant⁷",Major }, // C E  G  B♭
- { 0x411,"dom ⁷ dominant ⁷",     Major }, // C E     B♭ no 5th
+ { 0x411,"dom⁷ dominant⁷",Major }, // C E     B♭ no 5th
  { 0x111,"⁺  augmented",  lowest}, // C E  G♯
  { 0x089,"m  minor",      minor }, // C E♭ G
  { 0x489,"m⁷ minor⁷",     minor }, // C E♭ G  B♭

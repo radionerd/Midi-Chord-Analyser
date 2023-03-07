@@ -46,6 +46,12 @@ void midi_action(snd_seq_t *seq_handle) {
 }
 
 char *help = { "\
+USAGE: ChordAnalyser [OPTIONS]\r\n\
+Options\r\n\
+-h --help	This Help\r\n\
+-i              Request default input from midi through 14:0\r\n\
+-i  src:port    Request input from src:port eg -i 28:0\r\n\
+\r\n\
 Midi Chord Analyser\r\n\
 -------------------\r\n\
 \r\n\
@@ -61,12 +67,23 @@ Connect midi keyboard output to chord analyser input and synth\r\n\
 eg: $ fluidsynth -p Synth /usr/share/sounds/sf2/FluidR3_GM.sf2 # start sound synth\r\n\
 eg: $ aconnect -l # discover the identity of midi devices available\r\n\
 eg: $ aconnect 28 128 ; aconnect 28 129 ; aconnectgui\r\n\
+Or use the ChordAnalyser -i option to connect to the required midi source.\r\n\
+qjackctl->graph is another useful way to view the midi connections.\r\n\
 "};
 
-
 int main(int argc, char *argv[]) {
-
-  printf("%s%s","\x1B[2J",help);
+  int src_client = 0;
+  int src_port = 0;
+  for ( int i = 1 ; i < argc ; i++ ) {
+    if ( strncmp(argv[i],"-i",2 ) == 0 ) {
+      src_client = 14 ; // Default Midi through
+      if ( argc > i+1 ) {
+        sscanf(argv[++i],"%d:%d",&src_client,&src_port);
+      }
+    } else {
+      printf("%s%s","\x1B[2J",help);  
+    }
+  }
   snd_seq_t *seq_handle;
   int npfd;
   struct pollfd *pfd;
@@ -75,6 +92,15 @@ int main(int argc, char *argv[]) {
   npfd = snd_seq_poll_descriptors_count(seq_handle, POLLIN);
   pfd = (struct pollfd *)alloca(npfd * sizeof(struct pollfd));
   snd_seq_poll_descriptors(seq_handle, pfd, npfd, POLLIN);
+  if ( src_client ) {
+      printf( "Requesting midi input from %d:%d\r\n",src_client,src_port);
+    int result = snd_seq_connect_from(seq_handle, 0, src_client, src_port);
+    if ( result != 0 ) {
+      printf("Failure code %d\r\n",result);
+    }
+  } else {
+      printf("%s%s","\x1B[2J",help);    
+  }
   while (1) {
     if (poll(pfd, npfd, 100000) > 0) {
       midi_action(seq_handle);
