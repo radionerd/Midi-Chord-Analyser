@@ -80,7 +80,7 @@ To compile the app under linux download all the files and compile using make.
 
 ### Start the app
 ~~~
- $ ./ChordAnalyser
+ $ ./ChordAnalyser -i 28:0 # Start the analyser and connect to midi source 28:0
 ~~~
 
 ### Connecting outputs to inputs
