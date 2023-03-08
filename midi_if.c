@@ -92,14 +92,13 @@ int main(int argc, char *argv[]) {
   npfd = snd_seq_poll_descriptors_count(seq_handle, POLLIN);
   pfd = (struct pollfd *)alloca(npfd * sizeof(struct pollfd));
   snd_seq_poll_descriptors(seq_handle, pfd, npfd, POLLIN);
+  printf("%s%s","\x1B[2J",help);    
   if ( src_client ) {
       printf( "Requesting midi input from %d:%d\r\n",src_client,src_port);
     int result = snd_seq_connect_from(seq_handle, 0, src_client, src_port);
     if ( result != 0 ) {
       printf("Failure code %d\r\n",result);
     }
-  } else {
-      printf("%s%s","\x1B[2J",help);    
   }
   while (1) {
     if (poll(pfd, npfd, 100000) > 0) {

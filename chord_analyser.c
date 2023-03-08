@@ -321,7 +321,7 @@ void chord_analyser( int note, int velocity, int channel , int on ) {
            const char * scale_degree = "";
            if ( (chord_defs[chord_id].flags&Major) || (chord_defs[chord_id].flags&minor) )
              scale_degree = ScaleDegree( i,chord,key_note,key_is_minor);
-           sprintf ( chord_msg ,"%s%s %s",
+           sprintf ( chord_msg ,"%2s%-14s %s",
               key_notes[num_sharps_flats+7][note_id],chord_defs[chord_id].name,scale_degree );
         }
       }
@@ -331,17 +331,15 @@ void chord_analyser( int note, int velocity, int channel , int on ) {
   if ( log_enable ) {
     printf( "Midi note=%d, mask=%03x notes=%03x %s\r\n", note, 1 << note % 12, notes, chord_msg );
   } else {
-    if ( notes ) {
-        printf("\r%s  Chord:  %s\r", VT100_CLEAR, chord_msg );
+    if ( key_is_minor == KEY_UNKNOWN ) {
+      showKeys();
     } else {
-      if ( key_is_minor == KEY_UNKNOWN ) {
-        showKeys();
-      } else {
-        printf("\r %s Key:  %s%s\r",
+      printf("%s",VT100_CLEAR);
+      printf("\r%s  Key:  %2s%s\r\n\n",
           key_sf[num_sharps_flats+7], key_notes[num_sharps_flats+7][ key_note % 12 ] , major_minor[key_is_minor]);
-      } 
+      printf("\r  Chord:  %s" , chord_msg );
     }
+    fflush(stdout);
   }
-  fflush(stdout);
 }
 
