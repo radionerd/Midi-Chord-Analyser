@@ -2,7 +2,7 @@
 
 ## Features
 
-Common chords are displayed with their root note, quality and scale degree.
+Common block chords are displayed with their root note, quality and scale degree.
 
 When running the app appears as a midi input device called ChordAnalyser
 
@@ -20,15 +20,18 @@ eg Major: I ii  iii IV V vi vii°
 
 eg minor: i ii° III iv v VI VII 
 
-### Example Chord
+### Example Key signature and chord display
 ~~~
-  Chord:  B♭   Major VI
-~~~
-
-The key signature is displayed when no chords are playing.
-~~~
- 1♭ Key:  Dm   minor
-~~~
+Key    Key   Scale
+Sig    Name  Degree   Chord
+1♭     Dm    i        Dm
+1♭     Dm    ii°      E°
+1♭     Dm    III      F
+1♭     Dm             G
+1♭     Dm    iv       Gm
+1♭     Dm    v        Am
+1♭     Dm    VI       B♭
+1♭     Dm    VII      C
 
 ### Setting the Key Signature
 
@@ -41,12 +44,12 @@ Example Key Signature Prompt:
 
 KSig  Major RelMinor  Diatonic Scale
 7♭      C♭      A♭    C♭ D♭ E♭ F♭ G♭ A♭ B♭ 
-6♭      G♭      E♭    G♭ A♭ B♭ C♭ D♭ E♭ F  
-5♭      D♭      B♭    D♭ E♭ F  G♭ A♭ B♭ C  
-4♭      A♭      F     A♭ B♭ C  D♭ E♭ F  G  
-3♭      E♭      C     E♭ F  G  A♭ B♭ C  D  
-2♭      B♭      G     B♭ C  D  E♭ F  G  A  
-1♭      F       D     F  G  A  B♭ C  D  E  
+6♭      G♭      E♭    G♭ A♭ B♭ C♭ D♭ E♭ F
+5♭      D♭      B♭    D♭ E♭ F  G♭ A♭ B♭ C
+4♭      A♭      F     A♭ B♭ C  D♭ E♭ F  G
+3♭      E♭      C     E♭ F  G  A♭ B♭ C  D
+2♭      B♭      G     B♭ C  D  E♭ F  G  A
+1♭      F       D     F  G  A  B♭ C  D  E
         C       A     C  D  E  F  G  A  B  
 1♯      G       E     G  A  B  C  D  E  F♯ 
 2♯      D       B     D  E  F♯ G  A  B  C♯ 

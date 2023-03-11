@@ -1,0 +1,18 @@
+#!/bin/bash
+# Remake midi connections.
+# Edit the midi port numbers for those on your system
+# Useful for keyboards that auto power off, 
+# or during software development when the app may appear and disappear.
+sleep 1
+while true
+do
+#  echo Connect 20 128
+  aconnect 20 128 2> /dev/null # keyboard to Chord Analyser
+#  echo Connect 20 129
+  aconnect 20 129 2> /dev/null # keyboard to Chord Analyser
+#  echo Connect 20 130
+  aconnect 20 130 2> /dev/null # keyboard to fluid synth
+  sleep 5
+done
+
+

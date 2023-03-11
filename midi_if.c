@@ -55,7 +55,7 @@ Options\r\n\
 Midi Chord Analyser\r\n\
 -------------------\r\n\
 \r\n\
-Common chords are displayed with their root note, quality and scale degree\r\n\
+Common block chords are displayed with their root note, quality and scale degree.\r\n\
 Root note: eg C,C♯,E,E♭ ...\r\n\
 Quality: eg Major, m Minor, ⁺ Augmented, ° Diminished, ⁷ Seventh ...\r\n\
 Scale Degree: Roman Numeral eg I IV V (major) i iv v (minor)\r\n\
@@ -81,7 +81,8 @@ int main(int argc, char *argv[]) {
         sscanf(argv[++i],"%d:%d",&src_client,&src_port);
       }
     } else {
-      printf("%s%s","\x1B[2J",help);  
+      // printf("%s","\x1B[2J");  
+      printf("%s", help);  
     }
   }
   snd_seq_t *seq_handle;
@@ -92,7 +93,8 @@ int main(int argc, char *argv[]) {
   npfd = snd_seq_poll_descriptors_count(seq_handle, POLLIN);
   pfd = (struct pollfd *)alloca(npfd * sizeof(struct pollfd));
   snd_seq_poll_descriptors(seq_handle, pfd, npfd, POLLIN);
-  printf("%s%s","\x1B[2J",help);    
+  // printf("%s","\x1B[2J");  
+  printf("%s", help);  
   if ( src_client ) {
       printf( "Requesting midi input from %d:%d\r\n",src_client,src_port);
     int result = snd_seq_connect_from(seq_handle, 0, src_client, src_port);
