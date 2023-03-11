@@ -6,6 +6,8 @@ Common block chords are displayed with their root note, quality and scale degree
 
 When running the app appears as a midi input device called ChordAnalyser
 
+The app uses Linux ALSA. Jack compatibility may be added later.
+
 ### Root note: 
 
 eg C,C♯,E,E♭ ...
@@ -66,8 +68,6 @@ Play the root note above♯ or below♭ middle C to select keys with 5-7♯ or 5
 eg: To set Dminor key. On the midi keyboard play top A♯+B+C followed by D+F+A
 
 Ref: https://en.wikipedia.org/wiki/Chord_notation
-
-The app uses Linux ALSA. Jack compatibility may be added later.
 
 ## Building
 To compile the app under linux download all the files and compile using make.
