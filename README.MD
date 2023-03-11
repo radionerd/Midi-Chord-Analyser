@@ -32,7 +32,7 @@ Sig    Name  Degree   Chord
 1♭     Dm    v        Am
 1♭     Dm    VI       B♭
 1♭     Dm    VII      C
-
+~~~
 ### Setting the Key Signature
 
 Set the Key Signature by playing far right hand notes A♯BC together followed by the new scale chord.
@@ -43,7 +43,7 @@ Example Key Signature Prompt:
 
 
 KSig  Major RelMinor  Diatonic Scale
-7♭      C♭      A♭    C♭ D♭ E♭ F♭ G♭ A♭ B♭ 
+7♭      C♭      A♭    C♭ D♭ E♭ F♭ G♭ A♭ B♭
 6♭      G♭      E♭    G♭ A♭ B♭ C♭ D♭ E♭ F
 5♭      D♭      B♭    D♭ E♭ F  G♭ A♭ B♭ C
 4♭      A♭      F     A♭ B♭ C  D♭ E♭ F  G
@@ -72,34 +72,37 @@ The app uses Linux ALSA. Jack compatibility may be added later.
 ## Building
 To compile the app under linux download all the files and compile using make.
 ~~~
- $ make
+ $ make # or edit and run the build script to suit
 ~~~
 
 ## Using
-### Start a sound synthesizer 
+### View the midi devices 
 ~~~
- $ fluidsynth -p Synth /usr/share/sounds/sf2/FluidR3_GM.sf2
+ $ qjackctl & # press the graph button
 ~~~
 
+<img src="qjackctl.png" style="height: 303px; width:333px;"/>
+
+### Start a synthesizer
+~~~
+qsynth &
+~~~
 ### Start the app
+
 ~~~
- $ ./ChordAnalyser -i 28:0 # Start the analyser and connect to midi source 28:0
+./ChordAnalyser  -i 20:0 # connect to keyboard.
 ~~~
 
-### Connecting outputs to inputs
+ The keyboard device number may change.
 
-Run aconnect to connect a midi keyboard output to the chord analyser input and synth input
-~~~
- $ aconnect -l # discover the identity of midi devices available
-~~~
-### Auto connect and view
-~~~
- $ aconnect 28 128 ; aconnect 28 129 ; aconnectgui
-~~~
+ Connect & disconnect the midi connections in qjackctl if needed
 
-<img src="aconnectgui.png" style="height: 272px; width:302px;"/>
+ ### View midi events
+ ~~~
+ midisnoop &
+ ~~~
 
-N.B. aconnectgui has the title 'ALSA Sequencer'
+ If things are not working as expected, visibility is the key
 
 ## Errors, omissions and improvements
 
