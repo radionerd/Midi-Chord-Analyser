@@ -168,7 +168,7 @@ int RotateOctaveByN ( int pattern , int n ){
 }
 
 // return the scale degree of chord being played if it matches the scale degree list
-const char * ScaleDegree(int note,int chord,int key_note,int key_is_minor){
+const char * OldScaleDegree(int note,int chord,int key_note,int key_is_minor){
 
   const int c_major_1_7[] = { 
     0x091, // C Major I
@@ -186,6 +186,7 @@ const char * ScaleDegree(int note,int chord,int key_note,int key_is_minor){
   int n = key_note; // transpose the playing chord to cmajor
   if ( key_is_minor ) n-=9; // Minor keys are 9 halfsteps from their relative major
   int transposed_chord = RotateOctaveByN ( chord , n ); 
+  printf( "Transposed chord = %03X\n",transposed_chord );
   for ( int degree = 0 ; degree < ( sizeof(c_major_1_7)/sizeof(int) ); degree++ ) {
     if ( c_major_1_7[degree] == transposed_chord ) {
       if( key_is_minor )
@@ -194,9 +195,8 @@ const char * ScaleDegree(int note,int chord,int key_note,int key_is_minor){
         return roman_major[degree];
     }
   }
-  return "    ";
+  return "";
 }
-
 
 const int Major      =    1;
 const int minor      =    2;
@@ -212,7 +212,7 @@ const struct { int notes;char *name;int flags; } chord_defs[] = {
  { 0x411,"dom⁷",Major }, // C E     B♭ no 5th  dominant⁷
  { 0x111,"⁺",   lowest}, // C E  G♯  augmented
  { 0x089,"m",   minor }, // C E♭ G  minor
- { 0x489,"m⁷",  minor }, // C E♭ G  B♭ minor⁷
+ { 0x489,"m⁷",  minor }, // C E  G  B♭ minor⁷
  { 0x049,"°",   minor }, // C E♭ G♭  diminished
  { 0x249,"°⁷",  lowest}, // C E♭ G♭ B♭♭ minor seventh flat five? diminished⁷
  { 0x085,"sus²",0     }, // CD  G      no 3rd *** beware inversions and naming. suspended²
@@ -222,6 +222,31 @@ const struct { int notes;char *name;int flags; } chord_defs[] = {
  { 0xc01,"Play Major or minor chord to set new key",new_key}, // B♭ B C
 };
 const int NUM_CHORD_DEFS = 15;
+
+const char * ScaleDegree(int root,int chord_id,int key_note,int key_is_minor){
+  const int    arabic_id_M [] = { 1,0,2,0,3,4,0,5,0,6,0,7 };// Major white notes
+  const int    arabic_id_m [] = { 3,0,4,0,5,6,0,7,0,1,0,2 };// minor white notes
+  const char * roman_major [] = { "","I","II","III","IV","V","VI","VII" };
+  const char * roman_minor [] = { "","i","ii","iii","iv","v","vi","vii" };
+  int chord = chord_defs[chord_id].notes;
+  if ( ( chord & 0x018 ) != 0 ) {// Transposed chord contains either E or E♭ ?
+   int note_id = ( 144 + root - key_note ) % 12;
+   int arabic_id = arabic_id_M [ note_id ];
+   if ( key_is_minor )
+     arabic_id   = arabic_id_m [ (note_id+9)%12 ];
+   if ( chord & 0x008 ) { // Minor chord containing E♭
+    // printf( "minor Transposed chord=%03X note_id=%d name=%s roman=%s\n",
+    //  chord, note_id , key_notes[7][note_id],roman_minor[ arabic_id ] );
+    return roman_minor[ arabic_id ] ;
+   } else {
+    // printf( "major Transposed chord=%03X note_id=%d name=%s roman=%s\n",
+    //  chord, note_id , key_notes[7][note_id],roman_major[ arabic_id ] );
+    return roman_major[ arabic_id ] ;
+   }
+  }
+  return "";
+}
+
 
 const int key_sf_index[] = { // Major key: -ve number of flats, +v number of sharps
  0, // C
@@ -253,7 +278,7 @@ void chord_analyser( int note, int velocity, int channel , int on ) {
   const int MAX_INT = 0x7fffffff;
   const int KEY_UNKNOWN = 2;
 #define NUM_NOTES 128
-  int notes = 0; // one octave of notes 2^0 == C, 2^1 == C♯...
+  int notes; // one octave of notes 2^0 == C, 2^1 == C♯...
   int lowest_note = MAX_INT;
   static int log_enable = 0;
   static int key_note = 0;
@@ -281,7 +306,7 @@ void chord_analyser( int note, int velocity, int channel , int on ) {
   } 
   
   char chord_msg[80] = {""};
-  int chord = notes;
+  // int chord = notes;
   const char * scale_degree = "";
   for ( int i = 0 ; i < 12 ; i++ ) {
     for ( int chord_id =0 ; chord_id < NUM_CHORD_DEFS ; chord_id++ ) {
@@ -313,7 +338,7 @@ void chord_analyser( int note, int velocity, int channel , int on ) {
            if ( chord_defs[chord_id].flags&lowest )
              note_id = lowest_note%12;
            if ( (chord_defs[chord_id].flags&Major) || (chord_defs[chord_id].flags&minor) )
-             scale_degree = ScaleDegree( i,chord,key_note,key_is_minor);
+             scale_degree = ScaleDegree( note_id,chord_id,key_note,key_is_minor);
            sprintf ( chord_msg ,"%s%s",
               key_notes[num_sharps_flats+7][note_id],chord_defs[chord_id].name);
            if ( note_id != lowest_note%12 ) // Insert slash notation where appropriate
@@ -338,7 +363,9 @@ void chord_analyser( int note, int velocity, int channel , int on ) {
           printf("Key    Key   Scale\r\n");
           printf("Sig    Name  Degree   Chord\r\n");
         }
-        printf( "%2s    %2s%s    %s     %s\r\n",
+        if ( scale_degree[0] == 0 )
+          scale_degree = "    ";// Unicode confuses %4s
+        printf( "%2s    %2s%s    %4s     %s\r\n",
           key_sf[num_sharps_flats+7], key_notes[num_sharps_flats+7][ key_note % 12 ] , major_minor[key_is_minor],
           scale_degree,chord_msg );
       }

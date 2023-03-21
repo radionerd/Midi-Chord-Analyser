@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 #include <alsa/asoundlib.h>
 #include "chord_analyser.h"
@@ -62,18 +63,21 @@ Scale Degree: Roman Numeral eg I IV V (major) i iv v (minor)\r\n\
 Set the Key Signature by playing the highest notes A♯BC together followed by the new scale chord\r\n\
 eg C Major C+E+G\r\n\
 \r\n\
-To make sure that midi events are sent to the chord analyser open 3 terminal windows:\r\n\
+To make sure that midi events are sent to the chord analyser:\r\n\
 Connect midi keyboard output to chord analyser input and synth\r\n\
-eg: $ fluidsynth -p Synth /usr/share/sounds/sf2/FluidR3_GM.sf2 # start sound synth\r\n\
-eg: $ aconnect -l # discover the identity of midi devices available\r\n\
-eg: $ aconnect 28 128 ; aconnect 28 129 ; aconnectgui\r\n\
+eg: $ qysnth & # start sound synth\r\n\
+eg: % qjackctl & # press the graph button to view and make connections\r\n\
 Or use the ChordAnalyser -i option to connect to the required midi source.\r\n\
-qjackctl->graph is another useful way to view the midi connections.\r\n\
+If all else fails run midisnoop to view midi events\r\n\
 "};
 
 int main(int argc, char *argv[]) {
   int src_client = 0;
   int src_port = 0;
+  struct timespec ts;
+  uint64_t seconds = 0;
+  
+  // check formal parameters
   for ( int i = 1 ; i < argc ; i++ ) {
     if ( strncmp(argv[i],"-i",2 ) == 0 ) {
       src_client = 14 ; // Default Midi through
@@ -81,10 +85,10 @@ int main(int argc, char *argv[]) {
         sscanf(argv[++i],"%d:%d",&src_client,&src_port);
       }
     } else {
-      // printf("%s","\x1B[2J");  
       printf("%s", help);  
     }
   }
+
   snd_seq_t *seq_handle;
   int npfd;
   struct pollfd *pfd;
@@ -93,18 +97,20 @@ int main(int argc, char *argv[]) {
   npfd = snd_seq_poll_descriptors_count(seq_handle, POLLIN);
   pfd = (struct pollfd *)alloca(npfd * sizeof(struct pollfd));
   snd_seq_poll_descriptors(seq_handle, pfd, npfd, POLLIN);
-  // printf("%s","\x1B[2J");  
   printf("%s", help);  
-  if ( src_client ) {
-      printf( "Requesting midi input from %d:%d\r\n",src_client,src_port);
-    int result = snd_seq_connect_from(seq_handle, 0, src_client, src_port);
-    if ( result != 0 ) {
-      printf("Failure code %d\r\n",result);
-    }
-  }
   while (1) {
-    if (poll(pfd, npfd, 100000) > 0) {
+    // Configure midi connection
+    clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
+    if ( seconds != ts.tv_sec ) {
+      seconds = ts.tv_sec ;
+      if ( src_client ) {
+        // -22 not found, -16 already connected, 0 success
+        snd_seq_connect_from(seq_handle, 0, src_client, src_port);
+      }
+    }
+    // connect midi events to app
+    if (poll(pfd, npfd, 100) > 0) { // poll 100 times then return
       midi_action(seq_handle);
-    }  
+    } 
   }
 }

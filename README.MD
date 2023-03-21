@@ -108,3 +108,5 @@ qsynth &
 
 Please contact the author
 
+Built and tested on Ubuntu Linux 22.04 X86 & ARM versions
+
