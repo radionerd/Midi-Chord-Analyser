@@ -18,9 +18,9 @@ eg Major, m Minor, ⁺ Augmented, ° Diminished, ⁷ Seventh ...
 
 ### Scale Degree in Roman Numerals 
 
-eg Major: I ii  iii IV V vi vii°
+eg Major chords : I II III IV VI VII
 
-eg minor: i ii° III iv v VI VII 
+eg minor chords : i ii iii iv vi vii
 
 ### Example Key signature and chord display
 ~~~
