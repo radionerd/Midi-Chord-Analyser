@@ -27,9 +27,9 @@ eg minor: i ii° III iv v VI VII
 Key    Key   Scale
 Sig    Name  Degree   Chord
 1♭     Dm    i        Dm
-1♭     Dm    ii°      E°
+1♭     Dm    ii       E°
 1♭     Dm    III      F
-1♭     Dm             G
+1♭     Dm    IV       G
 1♭     Dm    iv       Gm
 1♭     Dm    v        Am
 1♭     Dm    VI       B♭
