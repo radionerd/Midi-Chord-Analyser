@@ -14,7 +14,7 @@ then
  fi
  sleep 0.1
  echo Starting Chord Analyser
- ./ChordAnalyser  -i 28:0 # connect to keyboard. Kbd number may change
+ ./ChordAnalyser  -i 20:0 # connect to keyboard. Kbd number may change
 else
  echo Failed to compile
  exit 1

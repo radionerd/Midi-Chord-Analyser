@@ -37,8 +37,7 @@ Sig    Name  Degree   Chord
 ~~~
 ### Setting the Key Signature
 
-Set the Key Signature by playing far right hand notes A♯BC together followed by the new scale chord.
-
+Set the Key Signature by playing far right hand notes A♯BC together followed by the new scale chord of the same name.
 Example Key Signature Prompt:
 ~~~
            Chord Analyser
@@ -97,7 +96,7 @@ qsynth &
 
  Connect & disconnect the midi connections in qjackctl if needed
 
- ### View midi events
+### View midi events
  ~~~
  midisnoop &
  ~~~

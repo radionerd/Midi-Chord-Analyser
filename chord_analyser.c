@@ -204,24 +204,28 @@ const int lowest     =    4;
 const int new_key    =    8;
 const int log_toggle = 0x10;
 // chord Bitmaps 12 bits one octave C=0x1, C♯=0x2,D=0x4,D♯=0x8 ... B=0x800
+// 001 002 004 008 010 020 040 080 100 200 400 800
+//  C   Df  D   Ef  E   F   Gf  G   Af  A   Bf  B
+//const int NUM_CHORD_DEFS = 15;
 const struct { int notes;char *name;int flags; } chord_defs[] = {
- { 0x091,"",    Major }, // C E  G    Major
- { 0x891,"⁷",   Major }, // C E  G  B   Major⁷
- { 0x811,"⁷",   Major }, // C E     B  Major⁷
- { 0x491,"dom⁷",Major }, // C E  G  B♭ dominant⁷
- { 0x411,"dom⁷",Major }, // C E     B♭ no 5th  dominant⁷
- { 0x111,"⁺",   lowest}, // C E  G♯  augmented
- { 0x089,"m",   minor }, // C E♭ G  minor
- { 0x489,"m⁷",  minor }, // C E  G  B♭ minor⁷
- { 0x049,"°",   minor }, // C E♭ G♭  diminished
- { 0x249,"°⁷",  lowest}, // C E♭ G♭ B♭♭ minor seventh flat five? diminished⁷
+ { 0x091,""       ,Major }, // C E  G     Major
+ { 0x891,"Maj⁷,△⁷",Major }, // C E  G  B  Major⁷
+ { 0x811,"Maj⁷",   Major }, // C E     B  Major⁷
+ { 0x491,"⁷,dom⁷", Major }, // C E  G  B♭ dominant⁷
+ { 0x411,"⁷,dom⁷", Major }, // C E     B♭ no 5th  dominant⁷
+ { 0x111,"⁺,Aug",  lowest}, // C E  G♯  augmented
+ { 0x089,"m,min,minor",minor }, // C E♭ G  minor
+ { 0x489,"m⁷,⁻⁷,minor⁷",minor }, // C E  G  B♭ minor⁷
+ { 0x049,"°,diminished",minor }, // C E♭ G♭  diminished
+ { 0x449,"𝆩⁷,minor⁷flat⁵,halfDiminished⁷",minor}, // C E♭ G♭ B♭ minor seventh flat five? half diminished⁷
+ { 0x249,"°⁷,dim⁷,diminished⁷", minor+lowest}, // C E♭ G♭ B♭♭ minor seventh flat five? diminished⁷
  { 0x085,"sus²",0     }, // CD  G      no 3rd *** beware inversions and naming. suspended²
  { 0x0A1,"sus⁵",0     }, // C  FG      no 3rd *** beware inversions and naming. suspended⁵
  { 0x4a5,"9sus4",0    }, // C–F–G–B♭–D dominant9th
  { 0xb01,"Log toggle", log_toggle},// A♭ A B C
  { 0xc01,"Play Major or minor chord to set new key",new_key}, // B♭ B C
+ { 0x000,"",0 }, // end
 };
-const int NUM_CHORD_DEFS = 15;
 
 const char * ScaleDegree(int root,int chord_id,int key_note,int key_is_minor){
   const int    arabic_id_M [] = { 1,0,2,0,3,4,0,5,0,6,0,7 };// Major white notes
@@ -309,7 +313,9 @@ void chord_analyser( int note, int velocity, int channel , int on ) {
   // int chord = notes;
   const char * scale_degree = "";
   for ( int i = 0 ; i < 12 ; i++ ) {
-    for ( int chord_id =0 ; chord_id < NUM_CHORD_DEFS ; chord_id++ ) {
+    int chord_id = 0;
+    while ( chord_defs[chord_id].notes  ) { 
+    //for ( int chord_id =0 ; chord_id < NUM_CHORD_DEFS ; chord_id++ ) {
       if ( notes == chord_defs[chord_id].notes ) {
         if ( chord_defs[chord_id].flags & new_key ) {
           if ( lowest_note > 91 ) { // Only notes at top of keyboard set key
@@ -345,6 +351,7 @@ void chord_analyser( int note, int velocity, int channel , int on ) {
              sprintf(chord_msg+strlen(chord_msg),"/%s ",key_notes[num_sharps_flats+7][lowest_note%12]); 
         }
       }
+      chord_id++;
     }
     notes = RotateOctaveByN(notes,1);
   }
