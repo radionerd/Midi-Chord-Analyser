@@ -364,6 +364,7 @@ void chord_analyser( int note, int velocity, int channel , int on ) {
         showKeys();
       }
     } else {
+      const char * CLR_EOL = "\033[0K";       // ANSI Clear to end of line
       if ( chord_msg[0] ) {
         if ( --line_count <= 0 ) {
           line_count = 20;
@@ -372,9 +373,11 @@ void chord_analyser( int note, int velocity, int channel , int on ) {
         }
         if ( scale_degree[0] == 0 )
           scale_degree = "    ";// Unicode confuses %4s
-        printf( "%2s    %2s%s    %4s     %s\r\n",
+        printf( "\r\n%2s    %2s%s    %4s     %s%s",
           key_sf[num_sharps_flats+7], key_notes[num_sharps_flats+7][ key_note % 12 ] , major_minor[key_is_minor],
-          scale_degree,chord_msg );
+          scale_degree,chord_msg, CLR_EOL );
+      } else {
+        printf("\r");
       }
     }
     fflush(stdout);
