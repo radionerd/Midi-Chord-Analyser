@@ -8,7 +8,7 @@
 #include "chord_analyser.h"
 
 snd_seq_t *open_seq();
-void midi_action(snd_seq_t *seq_handle);
+//void midi_action(snd_seq_t *seq_handle);
 
 snd_seq_t *open_seq() {
 
@@ -29,7 +29,7 @@ snd_seq_t *open_seq() {
   return(seq_handle);
 }
 
-void midi_action(snd_seq_t *seq_handle) {
+void midi_action(snd_seq_t *seq_handle, int flush ) {
 
   snd_seq_event_t *ev;
 
@@ -40,7 +40,8 @@ void midi_action(snd_seq_t *seq_handle) {
         int velocity = ev->data.note.velocity ;
         int channel = ev->data.note.channel ;
         int on = ( ev->type == SND_SEQ_EVENT_NOTEON );
-        chord_analyser( note, velocity, channel, on );
+        if ( ! flush )
+          chord_analyser( note, velocity, channel, on );
     }
     snd_seq_free_event(ev);
   } while (snd_seq_event_input_pending(seq_handle, 0) > 0);
@@ -60,20 +61,23 @@ Common block chords are displayed with their root note, quality and scale degree
 Root note: eg C,C♯,E,E♭ ...\r\n\
 Quality: eg Major, m Minor, ⁺ Augmented, ° Diminished, ⁷ Seventh ...\r\n\
 Scale Degree: Roman Numeral eg I IV V (major) i iv v (minor)\r\n\
-Set the Key Signature by playing the highest notes A♯BC together followed by the new scale chord\r\n\
-eg C Major C+E+G\r\n\
 \r\n\
 To make sure that midi events are sent to the chord analyser:\r\n\
 Connect midi keyboard output to chord analyser input and synth\r\n\
 eg: $ qysnth & # start sound synth\r\n\
 eg: % qjackctl & # press the graph button to view and make connections\r\n\
 Or use the ChordAnalyser -i option to connect to the required midi source.\r\n\
-If all else fails run midisnoop to view midi events\r\n\
+If all else fails run midisnoop to view midi events.\r\n\
+\n\
+Set the Key Signature by playing the highest notes A♯BC together followed by the new scale chord\r\n\
+eg C Major C+E+G\r\n\
 "};
 
 int main(int argc, char *argv[]) {
-  int src_client = 0;
+  int src_client = 24; // My Kawai piano input
   int src_port = 0;
+  int flush = 1 ;
+  int last_connect = 0; // Suppress connected message on first start
   struct timespec ts;
   uint64_t seconds = 0;
   
@@ -99,18 +103,29 @@ int main(int argc, char *argv[]) {
   snd_seq_poll_descriptors(seq_handle, pfd, npfd, POLLIN);
   printf("%s", help);  
   while (1) {
-    // Configure midi connection
+    // Check configured midi connection every second
     clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
     if ( seconds != ts.tv_sec ) {
       seconds = ts.tv_sec ;
       if ( src_client ) {
         // -22 not found, -16 already connected, 0 success
-        snd_seq_connect_from(seq_handle, 0, src_client, src_port);
+        int connect = snd_seq_connect_from(seq_handle, 0, src_client, src_port);
+        if ( last_connect != connect ) {
+          last_connect = connect;
+          if ( connect == 0 ) {
+            printf("\r\nMidi Device %d:%d Connected\r\n",src_client,src_port);
+          }
+          if ( connect == -22 ) {
+            printf("\r\nMidi Device %d:%d Not Connected\r\n",src_client,src_port);
+          }
+        }
       }
     }
     // connect midi events to app
     if (poll(pfd, npfd, 100) > 0) { // poll 100 times then return
-      midi_action(seq_handle);
+      midi_action( seq_handle,flush );
     } 
+    flush = 0; // flush extraneeous input from before connection
   }
 }
+

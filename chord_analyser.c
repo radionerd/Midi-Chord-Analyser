@@ -201,7 +201,8 @@ const char * OldScaleDegree(int note,int chord,int key_note,int key_is_minor){
 const int Major      =    1;
 const int minor      =    2;
 const int lowest     =    4;
-const int new_key    =    8;
+const int enh        =    8; // enharmonic equivalents exist ( could be auto detected )
+const int new_key    =    16;
 const int log_toggle = 0x10;
 // chord Bitmaps 12 bits one octave C=0x1, C♯=0x2,D=0x4,D♯=0x8 ... B=0x800
 // 001 002 004 008 010 020 040 080 100 200 400 800
@@ -214,11 +215,12 @@ const struct { int notes;char *name;int flags; } chord_defs[] = {
  { 0x491,"⁷,dom⁷", Major }, // C E  G  B♭ dominant⁷
  { 0x411,"⁷,dom⁷", Major }, // C E     B♭ no 5th  dominant⁷
  { 0x111,"⁺,Aug",  lowest}, // C E  G♯  augmented
- { 0x089,"m,min,minor",minor }, // C E♭ G  minor
+ { 0x089,"m,-,min,minor",minor }, // C E♭ G  minor
+ { 0x289,"m⁶,-⁶,min⁶,minor⁶",minor+enh }, // C E♭ G A minor⁶
  { 0x489,"m⁷,⁻⁷,minor⁷",minor }, // C E  G  B♭ minor⁷
  { 0x049,"°,diminished",minor }, // C E♭ G♭  diminished
- { 0x449,"𝆩⁷,minor⁷flat⁵,halfDiminished⁷",minor}, // C E♭ G♭ B♭ minor seventh flat five? half diminished⁷
- { 0x249,"°⁷,dim⁷,diminished⁷", minor+lowest}, // C E♭ G♭ B♭♭ minor seventh flat five? diminished⁷
+ { 0x449,"𝆩⁷,minor⁷flat⁵,halfDiminished⁷",minor+enh}, // C E♭ G♭ B♭ minor seventh flat five? half diminished⁷
+ { 0x249,"°⁷,dim⁷,diminished⁷", minor+enh}, // C E♭ G♭ B♭♭ minor seventh flat five? diminished⁷
  { 0x085,"sus²",0     }, // CD  G      no 3rd *** beware inversions and naming. suspended²
  { 0x0A1,"sus⁵",0     }, // C  FG      no 3rd *** beware inversions and naming. suspended⁵
  { 0x4a5,"9sus4",0    }, // C–F–G–B♭–D dominant9th
@@ -267,6 +269,8 @@ const int key_sf_index[] = { // Major key: -ve number of flats, +v number of sha
 -7, // C♭ or -7+12 B
 };
 
+int lastNotes;
+
 void chord_analyser( int note, int velocity, int channel , int on ) {
 
   const char *off_on[] = { "Off","On" };
@@ -305,6 +309,7 @@ void chord_analyser( int note, int velocity, int channel , int on ) {
         notes |= ( 1 << ( i % 12) ) ;
         if ( lowest_note == MAX_INT )
           lowest_note = i;
+          
       }
     }
   } 
@@ -340,6 +345,8 @@ void chord_analyser( int note, int velocity, int channel , int on ) {
                    num_sharps_flats += 12; // User select 5-7♯ Key B, F♯, C♯
                line_count = 0 ; // Trigger heading message
            }
+           //if ( chord_defs[chord_id].flags&dim7 )
+           //    key_note = i;             
            int note_id = i;
            if ( chord_defs[chord_id].flags&lowest )
              note_id = lowest_note%12;
@@ -349,6 +356,20 @@ void chord_analyser( int note, int velocity, int channel , int on ) {
               key_notes[num_sharps_flats+7][note_id],chord_defs[chord_id].name);
            if ( note_id != lowest_note%12 ) // Insert slash notation where appropriate
              sprintf(chord_msg+strlen(chord_msg),"/%s ",key_notes[num_sharps_flats+7][lowest_note%12]); 
+           if ( --line_count <= 0 ) {
+             line_count = 20;
+             printf("Key    Key   Scale\r\n");
+             printf("Sig    Name  Degree   Chord\r\n");
+           }
+           if ( scale_degree[0] == 0 )
+             scale_degree = "    ";// Unicode confuses %4s
+           const char * CLR_EOL = "\033[0K";       // ANSI Clear to end of line
+           char * eequiv = "" ;
+           if ( chord_defs[chord_id].flags&enh )
+             eequiv = "Eq"; // flag enharmonic equivalents
+           printf( "\r\n%2s    %2s%s    %4s  %2s %s%s",
+             key_sf[num_sharps_flats+7], key_notes[num_sharps_flats+7][ key_note % 12 ] , major_minor[key_is_minor],
+             scale_degree,eequiv,chord_msg, CLR_EOL );
         }
       }
       chord_id++;
@@ -364,18 +385,7 @@ void chord_analyser( int note, int velocity, int channel , int on ) {
         showKeys();
       }
     } else {
-      const char * CLR_EOL = "\033[0K";       // ANSI Clear to end of line
       if ( chord_msg[0] ) {
-        if ( --line_count <= 0 ) {
-          line_count = 20;
-          printf("Key    Key   Scale\r\n");
-          printf("Sig    Name  Degree   Chord\r\n");
-        }
-        if ( scale_degree[0] == 0 )
-          scale_degree = "    ";// Unicode confuses %4s
-        printf( "\r\n%2s    %2s%s    %4s     %s%s",
-          key_sf[num_sharps_flats+7], key_notes[num_sharps_flats+7][ key_note % 12 ] , major_minor[key_is_minor],
-          scale_degree,chord_msg, CLR_EOL );
       } else {
         printf("\r");
       }
