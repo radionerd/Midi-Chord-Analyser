@@ -50,9 +50,11 @@ void midi_action(snd_seq_t *seq_handle, int flush ) {
 char *help = { "\
 USAGE: ChordAnalyser [OPTIONS]\r\n\
 Options\r\n\
+-e              List detected enharmonic equivalents (for testing)\r\n\
 -h --help	This Help\r\n\
 -i              Request default input from midi through 14:0\r\n\
 -i  src:port    Request input from src:port eg -i 28:0\r\n\
+-l              List supported chords\\r\n\
 \r\n\
 Midi Chord Analyser\r\n\
 -------------------\r\n\
@@ -83,13 +85,26 @@ int main(int argc, char *argv[]) {
   
   // check formal parameters
   for ( int i = 1 ; i < argc ; i++ ) {
-    if ( strncmp(argv[i],"-i",2 ) == 0 ) {
-      src_client = 14 ; // Default Midi through
-      if ( argc > i+1 ) {
-        sscanf(argv[++i],"%d:%d",&src_client,&src_port);
-      }
-    } else {
-      printf("%s", help);  
+    if ( argv[i][0] == '-' ) {
+      switch ( argv[i][1] ) {
+        case 'e' :
+          printf( "Enharmonic Equivalents List\r\n");
+          listEnharmonicEquivalents( );
+          return 0;
+        case 'i' :
+          src_client = 14; // midi through
+          if ( argc > i+1 ) {
+            sscanf(argv[++i],"%d:%d",&src_client,&src_port);
+            i++;            
+          }
+          break;
+        case 'l' :
+          listChords ( );
+          return 0;
+        default :
+          printf("%s", help);
+          return 0;          
+      }      
     }
   }
 
@@ -101,7 +116,7 @@ int main(int argc, char *argv[]) {
   npfd = snd_seq_poll_descriptors_count(seq_handle, POLLIN);
   pfd = (struct pollfd *)alloca(npfd * sizeof(struct pollfd));
   snd_seq_poll_descriptors(seq_handle, pfd, npfd, POLLIN);
-  printf("%s", help);  
+  //printf("%s", help);  
   while (1) {
     // Check configured midi connection every second
     clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
