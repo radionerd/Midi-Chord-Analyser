@@ -30,6 +30,8 @@
 #define _CHORD_ANALYSER_H_
 
 void chord_analyser( int note, int velocity, int channel , int on );
+void listEnharmonicEquivalents(void);
+void listChords(void);
 
 #endif /* _CHORD_ANALYSER_H_ */
 
