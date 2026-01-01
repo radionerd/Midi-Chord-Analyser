@@ -65,6 +65,7 @@ Play the root note above♯ or below♭ middle C to select keys with 5-7♯ or 5
 ~~~
 
 eg: To set Dminor key. On the midi keyboard play top A♯+B+C followed by D+F+A
+(If your keyboard has less than 88 keys the key and info selection will require minor change)
 
 Ref: https://en.wikipedia.org/wiki/Chord_notation
 
@@ -107,5 +108,5 @@ qsynth &
 
 Please contact the author
 
-Built and tested on Ubuntu Linux 22.04 X86 & ARM versions
+Built and tested on Ubuntu Linux 22.04 X86 & ARM versions with 88 key piano 
 
