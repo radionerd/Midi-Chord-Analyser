@@ -7,6 +7,7 @@
 // Arpeggio mode?
 // Configuration file?
 // C Major sharp or flat selection
+// Consider explicitly listing optional notes
 /*
 
 chord_analyser.c
@@ -104,14 +105,73 @@ Please contact the author
 
 
 */
-
-// const char * flat  = "♭"; // Note: These symbols are several characters long
-// const char * natural = "♮";
-// const char * sharp = "♯";
-// const char * double_sharp = "𝄪";
-// const char * seven = "⁷";
-// const char * augmented = "⁺";
-// const char * diminished = "°";
+const int new_key    =   16;
+//const int log_toggle = 0x10;
+const int info       = 0x20;
+// chord Bitmaps 12 bits one octave C=0x1, C♯=0x2,D=0x4,D♯=0x8 ... B=0x800
+// 001 002 004 008 010 020 040 080 100 200 400 800
+//  C   Df  D   Ef  E   F   Gf  G   Af  A   Bf  B
+const int C  = 0x001;
+const int Cs = 0x002;
+const int Df = 0x002;
+const int D  = 0x004;
+const int Ds = 0x008;
+const int Ef = 0x008;
+const int E  = 0x010;
+const int F  = 0x020;
+const int Fs = 0x040;
+const int Gf = 0x040;
+const int G  = 0x080;
+const int Gs = 0x100;
+const int Af = 0x100;
+const int A  = 0x200;
+const int Bff= 0x200;
+const int As = 0x400;
+const int Bf = 0x400;
+const int B  = 0x800;
+const int MAJOR = 0x10; // E
+const int MINOR = 0x08; // E flat
+struct { const int notes; const int optional; const char *name; const int flags;/* char * enh_eq;*/ } chord_defs[] = {
+ { C +E +G   ,0,              "          ,  M  , maj  , Maj  , ma  , Δ    ", 0 },
+ { C +E +G +B,0             , "Major  7th,  M7 , maj7 , Maj7 , ma7 , Δ⁷   ", 0 },
+ { C +E +G +B +D,   G       , "Major  9th,  M9 , maj9 , Maj9 , ma9 , Δ9   ", 0 },
+ { C +E +G +B +D +F,G + D   , "Major 11th,  M11, maj11, Maj11, ma11, Δ11  ", 0 },
+ { C +E +G +B +D +F +A,G+D+F, "Major 13th,  M13, maj13, Maj13, ma13, Δ13  ", 0 },
+ { C +E +G +A         ,G    , "Major  6th,  M6 , maj6 , Maj6 , ma6 , Δ6   ", 0 }, // Optional G
+ { C +E +G +A +D      ,G    , "Major  6/9, M6/9,maj6/9,Maj6/9,ma8/9, Δ6/9 ", 0 }, // Optional G
+ { C +E +G +B +D +Fs  ,G + D, "Major 7#11,M7#11,  Maj7#11 , maj7#11, Δ7#11", 0 }, // Optional G D
+ { C +Ef+G            ,0    , "minor     ,   - , min  ,  mi               ", 0 },
+ { C +Ef+G +Bf        ,G    , "minor  7th,  m7 , min7 ,  mi7 , −7         ", 0 }, // Optional G
+ { C +Ef+G +Bf+D      ,G    , "minor  9th,  m9 , min9 ,  mi9 , −9         ", 0 }, // Optional G
+ { C +Ef+G +Bf+D +F   ,G + D, "minor 11th,  m11, min11,  mi11, −11        ", 0 }, // Optional G D
+ { C +Ef+G +Bf+D +F +A,G+D+F, "minor 13th,  m13, min13,  mi13, −13        ", 0 }, // Optional G D F
+ { C +Ef+G +A         ,G    , "minor  6th,  m6 , min6 ,  mi6 , −6         ", 0 }, // Optional G
+ { C +Ef+G +Af        ,G    , "minor Flat 6th ,Flat6th, min♭6,mi♭6,m♭6,−♭6", 0 }, // Optional G
+ { C +Ef+G +A + D     ,G    , "minor 6th/9th,Min6/9,min6/9,mi6/9,m6/9,−6/9", 0 }, // Optional G
+ { C +Ef+G    +B      ,G    , "Minor/Major 7th,minMaj7,mM7,m/M7,mi/Ma7,-Δ7", 0 }, // Optional G
+ { C +E +G +Bf        ,G    , "7, Dominant  7th, dom⁷                     ", 0 }, // Optional G
+ { C +E +G +Bf + D    ,G    , "9, Dominant  9th, dom9                     ", 0 }, // Optional G
+ { C +E +G +Bf + D + F,G + D, "11,Dominant 11th, dom11                    ", 0 }, // Optional G D
+ { C +E +G +Bf + D+F+A,G+D+F, "13,Dominant 13th, dom13                    ", 0 }, // Optional G D A
+ { C +E +Gf+Bf        ,0    , "Dominant 7th Flat 5, 7♭5                   ", 0 },
+ { C +E +G +Bf +Ds    ,G    , "Dominant 7#9, 7#9                          ", 0 },
+ { C +E +G +Bf +Df    ,G    , "Dominant 7♭9, 7♭9                          ", 0 },
+ { C +E +G +Bf +D + Fs,G + D, "Dominant 7#11, 7#11                        ", 0 },
+ { C +F +G            ,0    , "Suspended Fourth, sus4, sus                ", 0 },
+ { C +F +G +Bf        ,G    , "Dominant 7th Suspended 4th, 7sus4          ", 0 },
+ { C +F +G +Bf +D     ,G    , "Dominant 9th Suspended 4th, 9sus4          ", 0 },
+ { C +D +G            ,0    , "Suspended 2nd,  sus2                       ", 0 },
+ { C +D +G +Bf        ,G    , "Dominant 7th Suspended 2nd, 7sus2          ", 0 },
+ { C +Ef+Gf           ,0    , "Diminished, dim, °                         ", 0 },
+ { C +Ef+Gf+Bff       ,0    , "Diminished 7th, dim7, °7                   ", 0 },
+ { C +Ef+Gf+Bf        ,0    , "Half Diminished 7th, minor 7 flat 5, -7♭5  ", 0 },
+ { C +E +Gs           ,0    , "Augmented, aug, +                          ", 0 },
+ { C +E +Gs+Bf        ,0    , "Augmented 7th, aug7, +7, 7#5               ", 0 },
+ { C +E +Gs+B         ,0    , "Augmented Major 7th, augM7, +M7, M7#5      ", 0 },
+ { Af+B+C             ,0    , "Supported Chord List                       ",info },// A♭ A B C
+ { Bf+B+C             ,0    , "Play Major or minor chord for a new key    ",new_key }, // B♭ B C
+ { 0x000,0,"",0 }, // end
+};
 
 #define NOTES_PER_OCTAVE 12
 
@@ -159,16 +219,34 @@ void showKeys( void ) {
 
 char * getNotesMsg ( int notes ) {
   static char msg[80];
-  //sprintf( msg, "0x%03x ",notes);
-  msg[0]=0;
+  sprintf( msg, " Notes: ");
+  //msg[0]=0;
   for ( int i = 0 ; i < NOTES_PER_OCTAVE ; i++ ) {
     if ( notes & 1 )
-      sprintf( msg + strlen(msg), "%s", key_notes[7][i]) ;
+      sprintf( msg + strlen(msg), "%-2s", key_notes[7][i]) ;
+    else
+      sprintf( msg + strlen(msg), "%2s", "") ;
     notes = notes >> 1 ;
   }
   return msg;
 }
 
+char * getOptionalChordNotesMsg( int chord_id ) {
+  char *nths[] = {"1st ","","9th ","","3rd ","11th ","","5th ","","6th ","","7th " };
+  int mask_id = 0;
+  static char msg[80];
+  msg[0]=0;
+  int optional = chord_defs[chord_id].optional;
+  if ( optional )
+    sprintf( msg, "Optional: " ) ;
+  while ( optional ) {
+    if ( optional & 1 )
+      sprintf( msg + strlen ( msg ) , "%s",nths[mask_id] );
+    optional = optional >> 1;
+    mask_id++;
+  }
+  return msg;
+}
 
 int RotateOctaveByN ( int pattern , int n ){
   while ( n < 0 ) n += NOTES_PER_OCTAVE;
@@ -183,72 +261,14 @@ int RotateOctaveByN ( int pattern , int n ){
   return pattern;
 }
 
-// return the scale degree of chord being played if it matches the scale degree list
-const char * OldScaleDegree(int note,int chord,int key_note,int key_is_minor){
-
-  const int c_major_1_7[] = { 
-    0x091, // C Major I
-    0x224, // D Minor ii
-    0x890, // E Minor iii
-    0x221, // F Major IV
-    0x884, // G Major V
-    0x211, // A Minor vi
-    0x824  // B dim   vii°
-  };// Chords I .. VII
-  // Key to Roman Numbers
-  const char * roman_major [] = { "I   ","ii  ","iii ","IV  ","V   ","vi  ","vii°" };
-  const char * roman_minor [] = { "i   ","ii° ","III ","iv  ","v   ","VI  ","VII " };
-
-  int n = key_note; // transpose the playing chord to cmajor
-  if ( key_is_minor ) n-=9; // Minor keys are 9 halfsteps from their relative major
-  int transposed_chord = RotateOctaveByN ( chord , n ); 
-  printf( "Transposed chord = %03X\n",transposed_chord );
-  for ( int degree = 0 ; degree < ( sizeof(c_major_1_7)/sizeof(int) ); degree++ ) {
-    if ( c_major_1_7[degree] == transposed_chord ) {
-      if( key_is_minor )
-        return roman_minor[(degree+2)%7]; // eg A minor vi maps to i
-      else
-        return roman_major[degree];
-    }
-  }
-  return "";
-}
-
-const int new_key    =   16;
-const int log_toggle = 0x10;
-// chord Bitmaps 12 bits one octave C=0x1, C♯=0x2,D=0x4,D♯=0x8 ... B=0x800
-// 001 002 004 008 010 020 040 080 100 200 400 800
-//  C   Df  D   Ef  E   F   Gf  G   Af  A   Bf  B
-const int MAJOR = 0x10; // E
-const int MINOR = 0x08; // E flat
-struct { const int notes;const char *name;const int flags; char * enh_eq; } chord_defs[] = {
- { 0x091,""       ,0,"" }, // C E  G     Major
- { 0x891,"Maj⁷,△⁷",0,"" }, // C E  G  B  Major⁷
- { 0x811,"Maj⁷",   0,"" }, // C E     B  Major⁷
- { 0x491,"⁷,dom⁷", 0,"" }, // C E  G  B♭ dominant⁷
- { 0x411,"⁷,dom⁷", 0,"" }, // C E     B♭ no 5th  dominant⁷
- { 0x111,"⁺,Aug",  0,""}, // C E  G♯  augmented
- { 0x089,"m,-,min,minor",0,"" }, // C E♭ G  minor
- { 0x289,"m⁶,-⁶,min⁶,minor⁶",0,"" }, // C E♭ G A minor⁶
- { 0x489,"m⁷,⁻⁷,minor⁷",0,"" }, // C E  G  B♭ minor⁷
- { 0x049,"°,diminished",0,"" }, // C E♭ G♭  diminished
- { 0x449,"𝆩⁷,minor⁷flat⁵,halfDiminished⁷",0,""}, // C E♭ G♭ B♭ minor seventh flat five? half diminished⁷
- { 0x249,"°⁷,dim⁷,diminished⁷",0,""}, // C E♭ G♭ B♭♭ minor seventh flat five? diminished⁷
- { 0x085,"sus²",0,""     }, // CD  G      no 3rd *** beware inversions and naming. suspended²
- { 0x0A1,"sus4",0,""     }, // C  FG      no 3rd *** beware inversions and naming. suspended4
- { 0x4a5,"9sus4",0,""    }, // C–F–G–B♭–D dominant9th
- { 0xb01,"Log toggle", log_toggle,""},// A♭ A B C
- { 0xc01,"Play Major or minor chord to set new key",new_key,""}, // B♭ B C
- { 0x000,"",0,"" }, // end
-};
-
 void listChords ( void ) {
-  int i = 0;
+  int chord_id = 0;
   int notes;
 
-  while ( ( notes = chord_defs[i].notes) ) {
-    printf( "%s %s\r\n",chord_defs[i].name,getNotesMsg(notes) );
-    i++;
+  printf( "Supported Chord List ( shown in C form )              1 * 2 * 3 4 * 5 * 6 * 7\r\n") ;
+  while ( ( notes = chord_defs[chord_id].notes) && ( chord_defs[chord_id].flags == 0 ) ) {
+    printf( "C %s %s %s\r\n",chord_defs[chord_id].name,getNotesMsg(notes), getOptionalChordNotesMsg( chord_id ) );
+    chord_id++;
   }
 }
 
@@ -287,8 +307,6 @@ void listEnharmonicEquivalents(void) {
     i++;   
   }
 }
-
-
 
 const char * ScaleDegree(int root,int chord_id,int key_note,int key_is_minor){
   const int    arabic_id_M [] = { 1,0,2,0,3,4,0,5,0,6,0,7 };// Major white notes
@@ -371,24 +389,26 @@ void printChordMessage( int kbd ) {
   const char *major_minor[] = { " ","m",""};
   const  int midi_middle_c = 60;
   static int num_sharps_flats = 0;
-  const char *off_on[] = { "Off","On" };
+//  const char *off_on[] = { "Off","On" };
 
   const char * scale_degree = "";
   int notes = kbd;
   for ( int i = 0 ; i < NOTES_PER_OCTAVE ; i++ ) { // Transpose the C chord to all 12 note offsets, check for pattern match through chord definitions
     int chord_id = 0;
     while ( chord_defs[chord_id].notes  ) { 
-    //for ( int chord_id =0 ; chord_id < NUM_CHORD_DEFS ; chord_id++ ) {
-      if ( notes == chord_defs[chord_id].notes ) {
+      // if ( notes == chord_defs[chord_id].notes ) {
+      // if ( ( notes == chord_defs[chord_id].notes ) || ( ( notes | chord_defs[chord_id].optional ) == chord_defs[chord_id].notes ) ) {
+      if ( ( notes | chord_defs[chord_id].optional ) == chord_defs[chord_id].notes ) { // Merge optional notes into each chord comparison
         if ( chord_defs[chord_id].flags & new_key ) {
           if ( lowest_note > 91 ) { // Only notes at top of keyboard set key
              sprintf (chord_msg ,"Play Major or minor chord to set new key");
              key_is_minor = KEY_UNKNOWN; 
              key_note = 12;
            }
-        } else if (chord_defs[chord_id].flags & log_toggle ) {
+        } else if (chord_defs[chord_id].flags & info /*log_toggle*/ ) {
            if ( lowest_note > 91 ) {
-              log_enable ^= 1; sprintf ( chord_msg, "Log = %s",off_on[log_enable] );
+              //log_enable ^= 1; sprintf ( chord_msg, "Log = %s",off_on[log_enable] );
+              listChords();
             }
         } else {
            if ( ( key_is_minor == KEY_UNKNOWN ) &&
@@ -409,24 +429,26 @@ void printChordMessage( int kbd ) {
            int note_id = i;
            //if ( chord_defs[chord_id].flags&lowest )
            //  note_id = lowest_note % NOTES_PER_OCTAVE ;
-           if ( (chord_defs[chord_id].notes&MAJOR) || (chord_defs[chord_id].notes&MINOR) )
+           if ( (chord_defs[chord_id].notes&MAJOR) || (chord_defs[chord_id].notes&MINOR) ) // So far all listed chords contain the root note
              scale_degree = ScaleDegree( note_id,chord_id,key_note,key_is_minor);
-           sprintf ( chord_msg ,"%s%s",
+           sprintf ( chord_msg ,"%-2s%s",
               key_notes[num_sharps_flats+7][note_id],chord_defs[chord_id].name);
-           if ( note_id != lowest_note % NOTES_PER_OCTAVE ) // Insert slash notation where appropriate
-             sprintf(chord_msg+strlen(chord_msg),"/%s ",key_notes[num_sharps_flats+7][ lowest_note % NOTES_PER_OCTAVE ] ); 
+           if ( note_id != lowest_note % NOTES_PER_OCTAVE ) // Insert slash notation or spaces as appropriate
+             sprintf(chord_msg+strlen(chord_msg),"/%s ",key_notes[num_sharps_flats+7][ lowest_note % NOTES_PER_OCTAVE ] );
+           else
+             sprintf(chord_msg+strlen(chord_msg),"   " ); 
            if ( --line_count <= 0 ) {
              line_count = 20;
-             printf("Key    Key   Scale\r\n");
+             printf("\r\nKey    Key   Scale\r\n");
              printf("Sig    Name  Degree   Chord\r\n");
            }
            if ( scale_degree[0] == 0 )
              scale_degree = "    ";// Unicode confuses %4s
            const char * CLR_EOL = "\033[0K";       // ANSI Clear to end of line
            //char * eequiv = "" ;
-           printf( "\r\n%2s    %2s%s    %4s %3s %s %s %s",
+           printf( "\r\n%2s    %2s%s    %4s %3s %s %s %s %s",
              key_sf[num_sharps_flats+7], key_notes[num_sharps_flats+7][ key_note %NOTES_PER_OCTAVE ] , major_minor[key_is_minor],
-             scale_degree,EnharmonicEquivalents(notes),chord_msg,getNotesMsg(kbd), CLR_EOL );
+             scale_degree,EnharmonicEquivalents(notes),chord_msg,getNotesMsg(kbd), getOptionalChordNotesMsg( chord_id ), CLR_EOL );
          }
       }
       chord_id++;
