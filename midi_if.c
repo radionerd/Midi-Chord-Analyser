@@ -71,7 +71,8 @@ eg: % qjackctl & # press the graph button to view and make connections\r\n\
 Or use the ChordAnalyser -i option to connect to the required midi source.\r\n\
 If all else fails run midisnoop to view midi events.\r\n\
 \n\
-Set the Key Signature by playing the highest notes A♯BC together followed by the new scale chord\r\n\
+List the supported chords by playing the highest notes G# + B + C \r\n\
+Set the Key Signature by playing the highest notes A♯ + B + C followed by the new scale chord\r\n\
 eg C Major C+E+G\r\n\
 "};
 
@@ -93,8 +94,8 @@ int main(int argc, char *argv[]) {
           return 0;
         case 'i' :
           src_client = 14; // midi through
-          if ( argc > i+1 ) {
-            sscanf(argv[++i],"%d:%d",&src_client,&src_port);
+          if ( ( argc > i+1 ) && ( argv[i+1][0] != '-' ) ) {
+            sscanf(argv[i+1],"%d:%d",&src_client,&src_port);
             i++;            
           }
           break;
