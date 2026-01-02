@@ -35,13 +35,39 @@ void midi_action(snd_seq_t *seq_handle, int flush ) {
 
   do {
     snd_seq_event_input(seq_handle, &ev);
-    if ( ( ev->type == SND_SEQ_EVENT_NOTEOFF ) || ( ev->type == SND_SEQ_EVENT_NOTEON ) ) {
+    if ( ( ev->type == SND_SEQ_EVENT_NOTEOFF ) || ( ev->type == SND_SEQ_EVENT_NOTEON ) ) { // ref /usr/install/alsa/seq_event.h
         int note = ev->data.note.note ;
         int velocity = ev->data.note.velocity ;
         int channel = ev->data.note.channel ;
         int on = ( ev->type == SND_SEQ_EVENT_NOTEON );
         if ( ! flush )
           chord_analyser( note, velocity, channel, on );
+    }
+    if ( ev->type == SND_SEQ_EVENT_CONTROLLER ) {
+        /* Ref /usr/include/alsa/seqmid.h
+    	//((ev)->type = SND_SEQ_EVENT_CONTROLLER,\
+	// snd_seq_ev_set_fixed(ev),\
+	// (ev)->data.control.channel = (ch),\
+	// (ev)->data.control.param = (cc),\
+	// (ev)->data.control.value = (val)) */
+	#define PEDAL_SUSTAIN 64 // RH Piano Pedal 0-127
+	#define PEDAL_SOSTENUTO 66 // Middle 0 or 127
+	#define PEDAL_SOFT 67 // LH Piano pedal 0-127	
+	switch (ev->data.control.param ) { // Ref /usr/include/alsa/seqmid.h
+	  case PEDAL_SUSTAIN :
+	    setArpegioMode( ev->data.control.value>63 );
+	    break;
+	  case PEDAL_SOSTENUTO :
+	    if ( ev->data.control.value > 63 )
+	      listChords();
+	    break;
+	  case PEDAL_SOFT :
+	    if ( ev->data.control.value == 127 )
+	      showKeys();
+	    break;
+	  default:  
+            printf("\r\nMIDI SND_SEQ_EVENT_CONTROLLER ev->data.control .channel=%d .param=%d .value=%d \r\n", (ev)->data.control.channel, (ev)->data.control.param, (ev)->data.control.value );
+        }       
     }
     snd_seq_free_event(ev);
   } while (snd_seq_event_input_pending(seq_handle, 0) > 0);
@@ -118,6 +144,7 @@ int main(int argc, char *argv[]) {
   pfd = (struct pollfd *)alloca(npfd * sizeof(struct pollfd));
   snd_seq_poll_descriptors(seq_handle, pfd, npfd, POLLIN);
   //printf("%s", help);  
+  showKeys( );
   while (1) {
     // Check configured midi connection every second
     clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
@@ -141,7 +168,7 @@ int main(int argc, char *argv[]) {
     if (poll(pfd, npfd, 100) > 0) { // poll 100 times then return
       midi_action( seq_handle,flush );
     } 
-    flush = 0; // flush extraneeous input from before connection
+    flush = 0; // flush extraneous input from before connection
   }
 }
 

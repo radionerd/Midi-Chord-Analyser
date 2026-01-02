@@ -105,9 +105,12 @@ Please contact the author
 
 
 */
-const int new_key    =   16;
-//const int log_toggle = 0x10;
+static int arpegioMode;
 const int info       = 0x20;
+static int line_count;
+const int KEY_UNKNOWN = 2; 
+static int key_is_minor=KEY_UNKNOWN;
+const int new_key    =   16;
 // chord Bitmaps 12 bits one octave C=0x1, C♯=0x2,D=0x4,D♯=0x8 ... B=0x800
 // 001 002 004 008 010 020 040 080 100 200 400 800
 //  C   Df  D   Ef  E   F   Gf  G   Af  A   Bf  B
@@ -132,7 +135,7 @@ const int B  = 0x800;
 const int MAJOR = 0x10; // E
 const int MINOR = 0x08; // E flat
 struct { const int notes; const int optional; const char *name; const int flags;/* char * enh_eq;*/ } chord_defs[] = {
- { C +E +G   ,0,              "          ,  M  , maj  , Maj  , ma  , Δ    ", 0 },
+ { C +E +G   ,0,              "Major,    ,  M  , maj  , Maj  , ma  , Δ    ", 0 },
  { C +E +G +B,0             , "Major  7th,  M7 , maj7 , Maj7 , ma7 , Δ⁷   ", 0 },
  { C +E +G +B +D,   G       , "Major  9th,  M9 , maj9 , Maj9 , ma9 , Δ9   ", 0 },
  { C +E +G +B +D +F,G + D   , "Major 11th,  M11, maj11, Maj11, ma11, Δ11  ", 0 },
@@ -214,8 +217,9 @@ void showKeys( void ) {
   }
   printf("\n\rTo set the key signature play the major or minor chord of the same name.\r\n");
   printf("Play the root note above♯ or below♭ middle C to select keys with 5-7♯ or 5-7♭\r\n");
+  line_count = -1;
+  key_is_minor = KEY_UNKNOWN; 
 }
-
 
 char * getNotesMsg ( int notes ) {
   static char msg[80];
@@ -352,22 +356,26 @@ const int MAX_INT = 0x7fffffff;
 #define NUM_NOTES 128
 int lowest_note;
 
+static int keyboard_image[NUM_NOTES];
+
+void clearActiveNotes(void){
+    for ( int i = 0 ; i < NUM_NOTES ; i++ ) {
+      keyboard_image[i]=0;
+    }
+}
+
 int getActiveNotes( int note, int velocity, int channel , int on ) {
 
   int notes; // one octave of notes 2^0 == C, 2^1 == C♯...
-  static int started ;
-  static int keyboard_image[NUM_NOTES];
 
   // make an image of all active keyboard notes
-  if ( ! started ) { // clear image on first call
-    started++;
-    for ( int i = 0 ; i < NUM_NOTES ; i++ ) 
-      keyboard_image[i] = 0;
-  }
   notes = 0; // collapse all the active keyboard notes into a single octave called notes
   lowest_note = MAX_INT;
   if ( ( note > 0 ) && ( note < NUM_NOTES ) ) {
-    keyboard_image[note] = on;
+    if ( arpegioMode )
+      keyboard_image[note] |= on;
+    else
+      keyboard_image[note] = on;
     for ( int i = 0 ; i < NUM_NOTES ; i++ ) {
       if ( keyboard_image[i] ) {
         notes |= ( 1 << ( i % NOTES_PER_OCTAVE ) ) ;
@@ -381,15 +389,12 @@ int getActiveNotes( int note, int velocity, int channel , int on ) {
 
 void printChordMessage( int kbd ) {
   char chord_msg[80] = {""};
-  const int KEY_UNKNOWN = 2; 
   static int key_note = 0;
-  static int key_is_minor = KEY_UNKNOWN ;
-  static int line_count=0;
   static int log_enable = 0;
+  static int chord_shown;
   const char *major_minor[] = { " ","m",""};
   const  int midi_middle_c = 60;
   static int num_sharps_flats = 0;
-//  const char *off_on[] = { "Off","On" };
 
   const char * scale_degree = "";
   int notes = kbd;
@@ -400,14 +405,13 @@ void printChordMessage( int kbd ) {
       // if ( ( notes == chord_defs[chord_id].notes ) || ( ( notes | chord_defs[chord_id].optional ) == chord_defs[chord_id].notes ) ) {
       if ( ( notes | chord_defs[chord_id].optional ) == chord_defs[chord_id].notes ) { // Merge optional notes into each chord comparison
         if ( chord_defs[chord_id].flags & new_key ) {
-          if ( lowest_note > 91 ) { // Only notes at top of keyboard set key
+          //if ( lowest_note > 91 ) { // Only notes at top of keyboard set key
              sprintf (chord_msg ,"Play Major or minor chord to set new key");
              key_is_minor = KEY_UNKNOWN; 
              key_note = 12;
-           }
+          //}
         } else if (chord_defs[chord_id].flags & info /*log_toggle*/ ) {
            if ( lowest_note > 91 ) {
-              //log_enable ^= 1; sprintf ( chord_msg, "Log = %s",off_on[log_enable] );
               listChords();
             }
         } else {
@@ -434,9 +438,9 @@ void printChordMessage( int kbd ) {
            sprintf ( chord_msg ,"%-2s%s",
               key_notes[num_sharps_flats+7][note_id],chord_defs[chord_id].name);
            if ( note_id != lowest_note % NOTES_PER_OCTAVE ) // Insert slash notation or spaces as appropriate
-             sprintf(chord_msg+strlen(chord_msg),"/%s ",key_notes[num_sharps_flats+7][ lowest_note % NOTES_PER_OCTAVE ] );
+             sprintf(chord_msg+strlen(chord_msg),"/%-2s ",key_notes[num_sharps_flats+7][ lowest_note % NOTES_PER_OCTAVE ] );
            else
-             sprintf(chord_msg+strlen(chord_msg),"   " ); 
+             sprintf(chord_msg+strlen(chord_msg)," %-2s ","" ); 
            if ( --line_count <= 0 ) {
              line_count = 20;
              printf("\r\nKey    Key   Scale\r\n");
@@ -449,6 +453,7 @@ void printChordMessage( int kbd ) {
            printf( "\r\n%2s    %2s%s    %4s %3s %s %s %s %s",
              key_sf[num_sharps_flats+7], key_notes[num_sharps_flats+7][ key_note %NOTES_PER_OCTAVE ] , major_minor[key_is_minor],
              scale_degree,EnharmonicEquivalents(notes),chord_msg,getNotesMsg(kbd), getOptionalChordNotesMsg( chord_id ), CLR_EOL );
+           chord_shown++;
          }
       }
       chord_id++;
@@ -466,7 +471,10 @@ void printChordMessage( int kbd ) {
     } else {
       if ( chord_msg[0] ) {
       } else {
-        printf("\r");
+        if ( chord_shown ) { // blank line between multiple chords
+          chord_shown = 0;
+          printf("\r\n");
+        }
       }
     }
     fflush(stdout);
@@ -475,7 +483,20 @@ void printChordMessage( int kbd ) {
 
 void chord_analyser( int note, int velocity, int channel , int on ) {
   int notes = getActiveNotes( note, velocity, channel , on );
-  printChordMessage( notes );
+  if ( ( arpegioMode == 0  ) || on  )
+    printChordMessage( notes );
+}
+
+void setArpegioMode( int mode ) {
+  // const char *off_on[] = { "Off","On" };
+  if ( arpegioMode != mode ) {
+    arpegioMode = mode;
+    if ( ! arpegioMode ) {
+      clearActiveNotes();
+      chord_analyser (1,0,0,0); // clear sounding notes on pedal release
+    } 
+    // printf( "\r\nArpegio Mode %s\r\n",off_on[arpegioMode]);
+  }
 }
 
 

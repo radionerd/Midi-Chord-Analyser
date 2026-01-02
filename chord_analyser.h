@@ -32,6 +32,8 @@
 void chord_analyser( int note, int velocity, int channel , int on );
 void listEnharmonicEquivalents(void);
 void listChords(void);
+void setArpegioMode( int mode );
+void showKeys( void );
 
 #endif /* _CHORD_ANALYSER_H_ */
 
