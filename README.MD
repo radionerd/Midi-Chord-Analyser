@@ -64,10 +64,15 @@ To set the key signature play the major or minor chord of the same name.
 Play the root note above♯ or below♭ middle C to select keys with 5-7♯ or 5-7♭
 ~~~
 
-eg: To set Dminor key. On the midi keyboard play top A♯+B+C followed by D+F+A
-(If your keyboard has less than 88 keys the key and info selection will require minor change)
+eg: To set Dminor key. On the midi keyboard play A♯+B+C followed by D+F+A
 
 Ref: https://en.wikipedia.org/wiki/Chord_notation
+
+### Piano Pedal Controls
+
+* Soft      Pedal - New Key Signature (Left) 
+* Sostenuto Pedal - Chord List        (Right)
+* Sustain   Pedal - Arpegio Mode      (Centre)
 
 ## Building
 To compile the app under linux download all the files and compile using make.
