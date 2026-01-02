@@ -69,11 +69,11 @@ eg: To set Dminor key. On the midi keyboard play A♯+B+C followed by D+F+A
 Ref: https://en.wikipedia.org/wiki/Chord_notation
 
 ### Piano Pedal Controls
-
+---
 * Soft      Pedal - New Key Signature (Left) 
-* Sostenuto Pedal - Chord List        (Right)
-* Sustain   Pedal - Arpegio Mode      (Centre)
-
+* Sostenuto Pedal - Chord List        (Centre)
+* Sustain   Pedal - Arpegio Mode      (Right)
+---
 ## Building
 To compile the app under linux download all the files and compile using make.
 ~~~
