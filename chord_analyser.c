@@ -221,10 +221,53 @@ void showKeys( void ) {
   key_is_minor = KEY_UNKNOWN; 
 }
 
-char * getNotesMsg ( int notes ) {
+int RotateOctaveByN ( int pattern , int n ){
+  while ( n < 0 ) n += NOTES_PER_OCTAVE;
+  if ( n >= NOTES_PER_OCTAVE ) n = n%NOTES_PER_OCTAVE;
+  while ( n > 0 ) {
+    int lsb = pattern & 1; 
+    pattern = pattern >> 1 ;
+    if ( lsb )
+      pattern |= 0x800;
+    n--;
+  }
+  return pattern;
+}
+
+char * getOptNotesMsg ( int notes , int chord_id, int root ) {
+  static char msg[80];
+  const char * INVERSE = "\e[7m"; // Optional notes not played
+  const char * NORMAL  = "\e[0m"; // Playing notes & spaces
+  const char * UNDERLINE  = "\e[4m"; // optional notes that are sounding
+  sprintf( msg, " Notes: ");
+  for ( int i = 0 ; i < NOTES_PER_OCTAVE ; i++ ) {
+    int optional = RotateOctaveByN( chord_defs[chord_id].optional, i - root ) & 1 ;
+    if ( notes & 1 ) {
+      if ( optional ) {
+        sprintf( msg + strlen(msg), "%s%s%s", UNDERLINE,key_notes[7][i],NORMAL) ;  // Optional notes
+        if ( ! key_notes[7][i][1] )
+          sprintf( msg + strlen(msg), " ") ; // Pad out if not sharp or flat
+      } else {
+        sprintf( msg + strlen(msg), "%s%-2s%s", NORMAL,key_notes[7][i],NORMAL) ;  // required notes
+      }
+    } else {
+      if ( optional ) {
+        sprintf( msg + strlen(msg), "%s%s%s", INVERSE,key_notes[7][i],NORMAL) ;  // Optional notes not playing
+        if ( ! key_notes[7][i][1] )
+          sprintf( msg + strlen(msg), " ") ; // Pad out if not sharp or flat
+      } else {
+        sprintf( msg + strlen(msg), "%2s", "") ;
+      }
+    }
+    notes = notes >> 1 ;
+  }
+  return msg;
+}
+
+/*
+char * getNotesMsg( int notes ) {
   static char msg[80];
   sprintf( msg, " Notes: ");
-  //msg[0]=0;
   for ( int i = 0 ; i < NOTES_PER_OCTAVE ; i++ ) {
     if ( notes & 1 )
       sprintf( msg + strlen(msg), "%-2s", key_notes[7][i]) ;
@@ -233,7 +276,7 @@ char * getNotesMsg ( int notes ) {
     notes = notes >> 1 ;
   }
   return msg;
-}
+}*/
 
 char * getOptionalChordNotesMsg( int chord_id ) {
   char *nths[] = {"1st ","","9th ","","3rd ","11th ","","5th ","","6th ","","7th " };
@@ -252,26 +295,16 @@ char * getOptionalChordNotesMsg( int chord_id ) {
   return msg;
 }
 
-int RotateOctaveByN ( int pattern , int n ){
-  while ( n < 0 ) n += NOTES_PER_OCTAVE;
-  if ( n >= NOTES_PER_OCTAVE ) n = n%NOTES_PER_OCTAVE;
-  while ( n > 0 ) {
-    int lsb = pattern & 1; 
-    pattern = pattern >> 1 ;
-    if ( lsb )
-      pattern |= 0x800;
-    n--;
-  }
-  return pattern;
-}
-
 void listChords ( void ) {
   int chord_id = 0;
   int notes;
+  int key = 4; // Key is preset to C but adjustable for testing
 
-  printf( "Supported Chord List ( shown in C form )              1 * 2 * 3 4 * 5 * 6 * 7\r\n") ;
+  printf( "Supported Chord List ( %-2s shown as root note )        1 * 2 * 3 4 * 5 * 6 * 7th\r\n", key_notes[7][key] ) ;
   while ( ( notes = chord_defs[chord_id].notes) && ( chord_defs[chord_id].flags == 0 ) ) {
-    printf( "C %s %s %s\r\n",chord_defs[chord_id].name,getNotesMsg(notes), getOptionalChordNotesMsg( chord_id ) );
+    // notes&=(0x080^0xffff); // temp remove 5th for testing
+    notes = RotateOctaveByN ( notes , 12-key );
+    printf( "%-2s%s %s %s\r\n",key_notes[7][key],chord_defs[chord_id].name,getOptNotesMsg(notes,chord_id,key), getOptionalChordNotesMsg( chord_id ) );
     chord_id++;
   }
 }
@@ -282,6 +315,7 @@ char * EnharmonicEquivalents ( int kbd ) {
   int equivs = 0;
   static char msg[4]="Eq0";
 
+  return ""; // Consider deleting this feature
   while ( chord_defs[i].notes ) {
       for( int j = 0 ; j < NOTES_PER_OCTAVE ; j++ ) {
         kbd =  RotateOctaveByN ( kbd , 1 ) ;
@@ -398,7 +432,7 @@ void printChordMessage( int kbd ) {
 
   const char * scale_degree = "";
   int notes = kbd;
-  for ( int i = 0 ; i < NOTES_PER_OCTAVE ; i++ ) { // Transpose the C chord to all 12 note offsets, check for pattern match through chord definitions
+  for ( int root = 0 ; root < NOTES_PER_OCTAVE ; root++ ) { // Transpose the C chord to all 12 note offsets, check for pattern match through chord definitions
     int chord_id = 0;
     while ( chord_defs[chord_id].notes  ) { 
       // if ( notes == chord_defs[chord_id].notes ) {
@@ -430,7 +464,7 @@ void printChordMessage( int kbd ) {
                //printf("\\r\nchord_id=%d chord_defs[chord_id].notes=0x%02x key_note=%d lowest_note=%d key_is_minor=%d num_sharps_flats=%d\r\n",
                //  chord_id,chord_defs[chord_id].notes,key_note, lowest_note, key_is_minor, num_sharps_flats  );
            }
-           int note_id = i;
+           int note_id = root;
            //if ( chord_defs[chord_id].flags&lowest )
            //  note_id = lowest_note % NOTES_PER_OCTAVE ;
            if ( (chord_defs[chord_id].notes&MAJOR) || (chord_defs[chord_id].notes&MINOR) ) // So far all listed chords contain the root note
@@ -450,9 +484,12 @@ void printChordMessage( int kbd ) {
              scale_degree = "    ";// Unicode confuses %4s
            const char * CLR_EOL = "\033[0K";       // ANSI Clear to end of line
            //char * eequiv = "" ;
+           //printf( "\r\n%2s    %2s%s    %4s %3s %s %s %s %s",
+           //  key_sf[num_sharps_flats+7], key_notes[num_sharps_flats+7][ key_note %NOTES_PER_OCTAVE ] , major_minor[key_is_minor],
+           //  scale_degree,EnharmonicEquivalents(notes),chord_msg,getNotesMsg(kbd), getOptionalChordNotesMsg( chord_id ), CLR_EOL );
            printf( "\r\n%2s    %2s%s    %4s %3s %s %s %s %s",
              key_sf[num_sharps_flats+7], key_notes[num_sharps_flats+7][ key_note %NOTES_PER_OCTAVE ] , major_minor[key_is_minor],
-             scale_degree,EnharmonicEquivalents(notes),chord_msg,getNotesMsg(kbd), getOptionalChordNotesMsg( chord_id ), CLR_EOL );
+             scale_degree,EnharmonicEquivalents(notes),chord_msg,getOptNotesMsg(kbd,chord_id,root), getOptionalChordNotesMsg( chord_id ), CLR_EOL );
            chord_shown++;
          }
       }
