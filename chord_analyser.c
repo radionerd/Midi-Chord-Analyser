@@ -465,8 +465,7 @@ void printChordMessage( int kbd ) {
               listChords();
             }
         } else {
-           if ( ( key_is_minor == KEY_UNKNOWN ) &&
-               ((chord_defs[chord_id].notes&MAJOR) ||(chord_defs[chord_id].notes&MINOR)) ) {
+           if ( ( key_is_minor == KEY_UNKNOWN ) && ((chord_defs[chord_id].notes&MAJOR) ||(chord_defs[chord_id].notes&MINOR)) && ( chord_defs[chord_id].optional == 0 )) {
                key_note = lowest_note;
                key_is_minor = 0;
                if ( chord_defs[chord_id].notes&MINOR ) {
